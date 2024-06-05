@@ -32,6 +32,11 @@
         .head{
             color: rgb(17, 17, 201);
         }
+        .no_records{
+            border: 1px solid #dddddd;
+            text-align: center;
+            padding: 8px;   
+        }
     </style>
    
 </head>
@@ -85,7 +90,7 @@
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="6">
+                    <td colspan="6" class="no_records">
                         <h3>Record has been deleted</h3>
                     </td>
                 </tr>
