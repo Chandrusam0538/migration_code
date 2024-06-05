@@ -203,176 +203,165 @@ def get_user_by_username_or_email(username_or_email):
 
     return user
 
-def scan_and_store_data(conn_source, target_db_type, db_type, database, password, user, host):
+
+def scan_and_store_data(request):
+    if request.method == "POST":
+        conn_source = request.POST.get("conn_source")
+        target_db_type = request.POST.get("target_db_type")
+        db_type = request.POST.get("db_type")
+        database = request.POST.get("db_name")
+        password = request.POST.get("db_password")
+        user = request.POST.get("db_username")
+        host = request.POST.get("db_server")
 
 
-    # Define the target database connection for PostgreSQL
-    if target_db_type == 'postgresql':
-        conn_pg = connect_to_postgresql()
-        cur = conn_pg.cursor()
-    elif target_db_type == 'mysql':
-        conn_pg = connect_to_mysql()
-        cur = conn_pg.cursor()
-    else:
-        print("Invalid target database type")
-        return False
-    cursor = conn_source.cursor()
-    try:
-        # Read existing records from the MetaData table
-        cur.execute("SELECT object_database, object_schema, object_type, object_name, object_size FROM metadata")
-        existing_records = cur.fetchall()
-        # print("Working2")  
-
-        existing_records = []  # Define a list to store existing records (if needed)
-
-        # Iterate over SQL queries and process each result set
-        
-        if db_type == 'sqlserver':
-        # # Define the current_database variable with the name of the current database
-            quoted_conn_str_sql_server = urllib.parse.quote_plus('DRIVER={ODBC Driver 17 for SQL Server};SERVER=' + host + ';DATABASE=' + database + ';UID=' + user + ';PWD=' + password)
-
-            engine_sql_server = create_engine('mssql+pyodbc:///?odbc_connect={}'.format(quoted_conn_str_sql_server))
-                        # Define SQL queries
-            sql_server_query = {
-            'Database': "SELECT DB_NAME() AS object_database;",
-            'Table': "SELECT DB_NAME() AS object_database, TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'Table' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';",
-            'View': "SELECT DB_NAME() AS object_database, TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'View' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.VIEWS;",
-            'Function': "SELECT DB_NAME() AS object_database, ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Function' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'FUNCTION';",
-            'Stored_Procedure': "SELECT DB_NAME() AS object_database, ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Stored_Procedure' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE';",
-            'Trigger': "SELECT DB_NAME() AS object_database, OBJECT_SCHEMA_NAME(parent_id) AS object_schema, OBJECT_NAME(parent_id) AS object_name, 'Trigger' AS object_type, 'Unknown size' AS size FROM sys.triggers;",
-            'Index': "SELECT DB_NAME() AS object_database, OBJECT_SCHEMA_NAME(object_id) AS object_schema, name AS object_name, 'Index' AS object_type, 'Unknown size' AS size FROM sys.indexes;"
-        }
-
-            for query_type, query in sql_server_query.items():
-                df = pd.read_sql(query, engine_sql_server)
-                for index, row in df.iterrows():
-                    object_database = row.get('object_database')
-                    object_schema_name = row.get('object_schema')
-                    object_type = row.get('object_type')
-                    object_name = row.get('object_name')
-                    object_size = row.get('size', 'Unknown size')
-
-        # Check if 'object_name' is not None and if the record doesn't already exist
-                    if object_name is not None and \
-                            (object_database, object_schema_name, object_type, object_name, object_size) not in existing_records:
-                                    # Prepare the SQL query for insertion
-                        insert_sql = """
-                                        INSERT INTO metadata (object_database, object_schema, object_type, object_name, object_size) 
-                                        VALUES (%s, %s, %s, %s, %s)
-                                    """
-                                    # Insert the new record into the MetaData table
-                        cur.execute(insert_sql, (object_database, object_schema_name, object_type, object_name, object_size))
-                                    # Add the inserted record to the existing_records list to prevent duplicate insertions
-                        existing_records.append((object_database, object_schema_name, object_type, object_name, object_size))
+        print("=================================")
+        print(target_db_type)
+        print(db_type)
+        print(database)
+        print(password)
+        print(user)
+        print(host)
 
 
-        elif db_type == 'mysql':            
-            mysql_conn = mysql.connector.connect(
-                host=host, user=user, password=password, database=database
-            )
-            mysql_cursor = mysql_conn.cursor(dictionary=True)
+        print("===============================")
 
-            # Define SQL queries for metadata migration
-            sql_query = {
-                'Table': "SELECT TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'Table' AS object_type, 'Unknown size' AS size FROM information_schema.tables WHERE TABLE_TYPE = 'BASE TABLE';",
-                'View': "SELECT TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'View' AS object_type, 'Unknown size' AS size FROM information_schema.views;",
-                'Function': "SELECT ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Function' AS object_type, 'Unknown size' AS size FROM information_schema.routines WHERE ROUTINE_TYPE = 'FUNCTION';",
-                'Stored_Procedure': "SELECT ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Stored_Procedure' AS object_type, 'Unknown size' AS size FROM information_schema.routines WHERE ROUTINE_TYPE = 'PROCEDURE';",
-                'Trigger': "SELECT TRIGGER_SCHEMA AS object_schema, TRIGGER_NAME AS object_name, 'Trigger' AS object_type, 'Unknown size' AS size FROM information_schema.triggers;",
-                'Index': "SELECT table_schema AS object_schema, table_name AS object_name, 'Index' AS object_type, 'Unknown size' AS size FROM information_schema.statistics WHERE index_name = 'PRIMARY';"
-            }
 
-            # Iterate over each query type
-            for query_type, query in sql_query.items():
-                mysql_cursor.execute(query)
-
-                for row in mysql_cursor.fetchall():
-                    object_database =  database
-                    object_schema = row['object_schema'] if row.get('object_schema') is not None else ''
-                    object_name = row['object_name'] if row.get('object_name') is not None else ''
-                    object_type = row['object_type'] if row.get('object_type') is not None else ''
-                    object_size = row['size'] if row.get('size') is not None else 'Unknown size'
-
-                    if object_name is not None and \
-                            (object_database, object_schema_name, object_type, object_name, object_size) not in existing_records:
-                        # Prepare the SQL query for insertion
-                        insert_sql = """
-                                        INSERT INTO metadata (object_database, object_schema, object_type, object_name, object_size) 
-                                        VALUES (%s, %s, %s, %s, %s)
-                                    """
-                        # Insert the new record into the MetaData table
-                        cur.execute(insert_sql, (object_database, object_schema_name, object_type, object_name, object_size))
-                        # Add the inserted record to the existing_records list to prevent duplicate insertions
-                        
-            # Commit the transaction
-            conn_pg.commit()
-            print("Metadata migration successful!")
-
-            # Commit the transaction
-            conn_pg.commit()
-            print("Metadata migration successful!")
-
-        elif db_type =='postgresql':
-        # Construct the connection string
-            conn_source = psycopg2.connect(dbname=database,user=user,password=password,host="localhost",port="5432")
-            
-            # Construct the connection string
-            conn_source.set_session(autocommit=True)  # Set autocommit to True
-
-            # Use DictCursor to fetch results as dictionaries
-            cur1 = conn_source.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-            sql_query = {
-                'Database': "SELECT current_database() AS object_database;",
-                'Table': "SELECT TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'Table' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';",
-                'View': "SELECT TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'View' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.VIEWS;",
-                'Function': "SELECT ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Function' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'FUNCTION';",
-                'Stored_Procedure': "SELECT ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Stored_Procedure' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE';",
-                'Trigger': "SELECT TRIGGER_SCHEMA AS object_schema, TRIGGER_NAME AS object_name, 'Trigger' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.TRIGGERS;",
-                'Index': "SELECT schemaname AS object_schema, indexname AS object_name, 'Index' AS object_type, 'Unknown size' AS size FROM pg_indexes WHERE schemaname NOT IN ('pg_catalog', 'information_schema');"
-            }
-
-            # Iterate over each query type
-            for query_type, query in sql_query.items():
-                # print(query)
-                cur1.execute(query)
-                for row in cur1.fetchall():
-                    object_database =  database
-                    object_schema_name = row.get('object_schema')
-                    object_name = row.get('object_name')
-                    object_type = row.get('object_type')
-                    object_size = row.get('size', 'Unknown size')
-                    # Process your data or insert into database
-                    # Check if 'object_name' is not None and if the record doesn't already exist
-                    if object_name is not None and \
-                            (object_database, object_schema_name, object_type, object_name, object_size) not in existing_records:
-                        # Prepare the SQL query for insertion
-                        insert_sql = """
-                                        INSERT INTO metadata (object_database, object_schema, object_type, object_name, object_size) 
-                                        VALUES (%s, %s, %s, %s, %s)
-                                    """
-                        # Insert the new record into the MetaData table
-                        cur.execute(insert_sql, (object_database, object_schema_name, object_type, object_name, object_size))
-                        # Add the inserted record to the existing_records list to prevent duplicate insertions
-                        existing_records.append((object_database, object_schema_name, object_type, object_name, object_size))
-                    
+        # Define the target database connection
+        if target_db_type == 'postgresql':
+            conn_pg = connect_to_postgresql()
+        elif target_db_type == 'mysql':
+            conn_pg = connect_to_mysql()
         else:
-            print("Unsupported database type:", db_type)
+            return HttpResponse("Invalid target database type")
 
-        # Commit the transaction after all records are processed
-        conn_pg.commit()
-        return True
+        
+        try:
+            cur = conn_pg.cursor()
+            # Read existing records from the MetaData table
+            cur.execute("SELECT object_database, object_schema, object_type, object_name, object_size FROM metadata")
+            existing_records = cur.fetchall()
 
-    except Exception as e:
-        print(f"Error occurred while scanning and storing data: {e}")
-        # conn_pg.rollback()
+            existing_records = []  # Define a list to store existing records (if needed)
 
-    finally:
-        # Close the cursor and connection
-        cur.close()
-        conn_pg.close()
-    
-    return False
+            # Iterate over SQL queries and process each result set
+            if db_type == 'sqlserver':
+                quoted_conn_str_sql_server = urllib.parse.quote_plus(
+                    f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={host};DATABASE={database};UID={user};PWD={password}'
+                )
+                engine_sql_server = create_engine(f'mssql+pyodbc:///?odbc_connect={quoted_conn_str_sql_server}')
+
+                sql_server_query = {
+                    'Database': "SELECT DB_NAME() AS object_database;",
+                    'Table': "SELECT DB_NAME() AS object_database, TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'Table' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';",
+                    'View': "SELECT DB_NAME() AS object_database, TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'View' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.VIEWS;",
+                    'Function': "SELECT DB_NAME() AS object_database, ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Function' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'FUNCTION';",
+                    'Stored_Procedure': "SELECT DB_NAME() AS object_database, ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Stored_Procedure' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE';",
+                    'Trigger': "SELECT DB_NAME() AS object_database, OBJECT_SCHEMA_NAME(parent_id) AS object_schema, OBJECT_NAME(parent_id) AS object_name, 'Trigger' AS object_type, 'Unknown size' AS size FROM sys.triggers;",
+                    'Index': "SELECT DB_NAME() AS object_database, OBJECT_SCHEMA_NAME(object_id) AS object_schema, name AS object_name, 'Index' AS object_type, 'Unknown size' AS size FROM sys.indexes;"
+                }
+
+                for query_type, query in sql_server_query.items():
+                    df = pd.read_sql(query, engine_sql_server)
+                    for index, row in df.iterrows():
+                        object_database = row.get('object_database')
+                        object_schema_name = row.get('object_schema')
+                        object_type = row.get('object_type')
+                        object_name = row.get('object_name')
+                        object_size = row.get('size', 'Unknown size')
+                        print(row)
+                        if object_name is not None and \
+                                (object_database, object_schema_name, object_type, object_name, object_size) not in existing_records:
+                            insert_sql = """
+                                            INSERT INTO metadata (object_database, object_schema, object_type, object_name, object_size) 
+                                            VALUES (%s, %s, %s, %s, %s)
+                                        """
+                            cur.execute(insert_sql, (object_database, object_schema_name, object_type, object_name, object_size))
+                            existing_records.append((object_database, object_schema_name, object_type, object_name, object_size))
+
+            elif db_type == 'mysql':
+                mysql_conn = mysql.connector.connect(
+                    host=host, user=user, password=password, database=database
+                )
+                mysql_cursor = mysql_conn.cursor(dictionary=True)
+
+                sql_query = {
+                    'Table': "SELECT TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'Table' AS object_type, 'Unknown size' AS size FROM information_schema.tables WHERE TABLE_TYPE = 'BASE TABLE';",
+                    'View': "SELECT TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'View' AS object_type, 'Unknown size' AS size FROM information_schema.views;",
+                    'Function': "SELECT ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Function' AS object_type, 'Unknown size' AS size FROM information_schema.routines WHERE ROUTINE_TYPE = 'FUNCTION';",
+                    'Stored_Procedure': "SELECT ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Stored_Procedure' AS object_type, 'Unknown size' AS size FROM information_schema.routines WHERE ROUTINE_TYPE = 'PROCEDURE';",
+                    'Trigger': "SELECT TRIGGER_SCHEMA AS object_schema, TRIGGER_NAME AS object_name, 'Trigger' AS object_type, 'Unknown size' AS size FROM information_schema.triggers;",
+                    'Index': "SELECT table_schema AS object_schema, table_name AS object_name, 'Index' AS object_type, 'Unknown size' AS size FROM information_schema.statistics WHERE index_name = 'PRIMARY';"
+                }
+
+                for query_type, query in sql_query.items():
+                    mysql_cursor.execute(query)
+                    for row in mysql_cursor.fetchall():
+                        object_database = database
+                        object_schema = row['object_schema'] if row.get('object_schema') is not None else ''
+                        object_name = row['object_name'] if row.get('object_name') is not None else ''
+                        object_type = row['object_type'] if row.get('object_type') is not None else ''
+                        object_size = row['size'] if row.get('size') is not None else 'Unknown size'
+                        print(row)
+                        if object_name is not None and \
+                                (object_database, object_schema_name, object_type, object_name, object_size) not in existing_records:
+                            insert_sql = """
+                                            INSERT INTO metadata (object_database, object_schema, object_type, object_name, object_size) 
+                                            VALUES (%s, %s, %s, %s, %s)
+                                        """
+                            cur.execute(insert_sql, (object_database, object_schema_name, object_type, object_name, object_size))
+                            existing_records.append((object_database, object_schema_name, object_type, object_name, object_size))
+
+            elif db_type == 'postgresql':
+                conn_source = psycopg2.connect(dbname=database, user=user, password=password, host=host, port="5432")
+                conn_source.set_session(autocommit=True)
+                cur1 = conn_source.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+                sql_query = {
+                    'Database': "SELECT current_database() AS object_database;",
+                    'Table': "SELECT TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'Table' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';",
+                    'View': "SELECT TABLE_SCHEMA AS object_schema, TABLE_NAME AS object_name, 'View' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.VIEWS;",
+                    'Function': "SELECT ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Function' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'FUNCTION';",
+                    'Stored_Procedure': "SELECT ROUTINE_SCHEMA AS object_schema, ROUTINE_NAME AS object_name, 'Stored_Procedure' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE';",
+                    'Trigger': "SELECT TRIGGER_SCHEMA AS object_schema, TRIGGER_NAME AS object_name, 'Trigger' AS object_type, 'Unknown size' AS size FROM INFORMATION_SCHEMA.TRIGGERS;",
+                    'Index': "SELECT schemaname AS object_schema, indexname AS object_name, 'Index' AS object_type, 'Unknown size' AS size FROM pg_indexes WHERE schemaname NOT IN ('pg_catalog', 'information_schema');"
+                }
+
+                for query_type, query in sql_query.items():
+                    cur1.execute(query)
+                    for row in cur1.fetchall():
+                        object_database = database
+                        object_schema_name = row.get('object_schema')
+                        object_name = row.get('object_name')
+                        object_type = row.get('object_type')
+                        object_size = row.get('size', 'Unknown size')
+                        print(row)
+                        if object_name is not None and \
+                                (object_database, object_schema_name, object_type, object_name, object_size) not in existing_records:
+                            insert_sql = """
+                                            INSERT INTO metadata (object_database, object_schema, object_type, object_name, object_size) 
+                                            VALUES (%s, %s, %s, %s, %s)
+                                        """
+                            cur.execute(insert_sql, (object_database, object_schema_name, object_type, object_name, object_size))
+                            existing_records.append((object_database, object_schema_name, object_type, object_name, object_size))
+
+            else:
+                print("Unsupported database type:", db_type)
+
+            # Commit the transaction after all records are processe
+
+                conn_pg.commit()
+                return HttpResponse("Data migration successful!")
+
+        except Exception as e:
+            conn_pg.rollback()
+            return HttpResponse(f"Error occurred while scanning and storing data: {e}")
+
+        finally:
+            cur.close()
+            conn_pg.close()
+
+    return redirect("data_catalogue")
 
 def user_logs(username, database_name, access_granted):
     conn_pg = connect_to_postgresql()
@@ -399,12 +388,29 @@ def dashboard(request):
 
     if request.method == "POST":
         db_type = request.POST.get('db_type')
-        host = request.POST.get('db_server')
-        user = request.POST.get('db_username')
-        password = request.POST.get('db_password')
+        host = request.POST.get('host')
+        user = request.POST.get('user')
+        password = request.POST.get('password')
+
+        print("=================================")
+        # print(target_db_type)
+        print(db_type)
+        # print(database)
+        print(password)
+        print(user)
+        print(host)
+
+        print("===================")
+
+        # print(db_type, host, user, password)
+
+        print("====================")
+
+
 
         access_granted, connection, db_names = get_db_connection(db_type, host, user, password)
 
+        print(db_names)
         if access_granted:
             # connection.close()
             return render(request, 'migrationapp/data_mig.html', {'db_names': db_names})
@@ -412,8 +418,6 @@ def dashboard(request):
             return render(request, 'migrationapp/data_mig.html', {'error_message': "Invalid database credentials. Please try again."})
 
     return render(request, 'migrationapp/dashboard.html')
-
-
 
 def get_database_name(request):
     if request.method == 'POST':
@@ -423,26 +427,30 @@ def get_database_name(request):
         return selected_value
     return render(request, 'data_mig.html')
 
-
 def data_mig(request):
     if request.method == "POST":
         target_db_type = request.POST.get('target_db_type')
         host = request.POST.get('db_server')
         user = request.POST.get('db_username')
         password = request.POST.get('db_password')
-        # database = request.POST.get('db_name')
-        # print(database)
-        database= get_database_name()
-        print("====================================database: ",database)
+        db_type = request.POST.get('db_type')
+
+        database = get_database_name()
+
+
+
+        print("=======get_database_name======database: ", database)
+
+
 
         conn_source = connect_to_source_database(target_db_type, host, user, password, database)
 
         if conn_source is not None:
-            success = scan_and_store_data(conn_source, target_db_type, database, password, user, host)
+            success = scan_and_store_data(request, conn_source, target_db_type, db_type, database, password, user, host)
             if success:
                 return render(request, 'migrationapp/data_catalogue.html')
             else:
-                return HttpResponse("Data migration failed!")
+                return render(request, 'migrationapp/data_mig.html', {'db_names': db_names})
         else:
             return HttpResponse("Error: Connection to source database failed!")
 
