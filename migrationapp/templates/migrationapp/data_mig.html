@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Data migration</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'migrationapp/css/dash.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Data migration</h1>
+
+        <!-- Form for Database Connection -->
+        <form method="post" class="form-container">
+            {% csrf_token %}
+            <div class="form-group drop">
+                <label for="db_name">Database Name:</label>
+                <select id="db_name" name="db_name" required>
+                    {% for db_name in db_names %}
+                        <option value="{{ db_name }}">{{ db_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- <div class="form-group drop">
+                <label for="db_type">source database:</label>
+                <select id="db_type" name="db_type" required>
+                    <option value="mysql">MySQL</option>
+                    <option value="postgresql">PostgreSQL</option>
+                    <option value="sqlserver">SQL Server</option>
+                </select>
+            </div> -->
+            <div class="form-group drop">
+                <label for="db_type">target database:</label>
+                <select id="db_type" name="db_type" required>
+                    <option value="mysql">MySQL</option>
+                    <option value="postgresql">PostgreSQL</option>
+                    <option value="sqlserver">SQL Server</option>
+                </select>
+            </div>
+            <!-- <div class="form-group">
+                <label for="db_name">Database Name:</label>
+                <input type="text" id="db_name" name="db_name" required> -->
+            </div>
+            <button type="submit">Migrate Data</button>
+        </form>
+
+        {% if scan_message %}
+            <p class="message">{{ scan_message }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>

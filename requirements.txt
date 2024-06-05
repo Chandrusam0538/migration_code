@@ -1,0 +1,7 @@
+django
+psycopg2
+urllib
+logging
+pyodbc
+pandas
+sqlalchemy

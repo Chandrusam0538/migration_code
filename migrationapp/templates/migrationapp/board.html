@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'migrationapp/css/board.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> <!-- Add Font Awesome -->
+
+</head>
+<body>
+    <div>
+
+    <div class="user-icon">
+        <i class="fas fa-user-circle"></i>
+    </div>
+
+    <script>
+        console.log(sessionStorage.getItem("user_id"))
+    </script>
+
+    <div class="container">
+        
+        <h1>Dashboard</h1>
+        <div class="card-container">
+            <div class="card" onclick="window.location.href='http://127.0.0.1:8000/Database_Connectivity/'">
+                <h2>Database Connection</h2>
+                <p>Connect</p>
+            </div>
+            <div class="card" onclick="window.location.href=''">
+                <h2>Data Migration</h2>
+                <p>Migrate</p>
+            </div>
+            <div class="card" onclick="window.location.href='http://127.0.0.1:8000/display_data/'">
+                <h2>Data Catalogue</h2>
+                <p>Display</p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

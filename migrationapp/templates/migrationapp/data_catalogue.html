@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Catalogue</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #a7dcf7;
+        }
+        .dropdown-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            padding: 5px 15px;
+        }
+        .dropdown-container select,
+        .dropdown-container button[type="submit"] {
+            padding: 5px 15px; /* Adjust padding for height and width */
+            font-size: 16px; /* Adjust font size */
+        }
+        .head{
+            color: rgb(17, 17, 201);
+        }
+    </style>
+   
+</head>
+<body>
+    <div class="dropdown-container">
+        <form method="post">
+            {% csrf_token %}
+            <select name="database_name">
+                <option value="">Select Database</option>
+                <option value="MySql">MySql</option>
+                <option value="Postgres">Postgres</option>
+            </select>
+
+            <select name="database_operation">
+                <option value="">Select Operation</option>
+                <option value="fetch_data">Fetch Data</option>
+                <option value="delete_records">Delete Records</option>
+            </select>
+
+            <button type="submit"> Fetch Data</button>
+            
+        </form>
+
+        
+       
+    </div>
+    <a href="/board/" style="text-decoration: none;" ><h1 class="head">Data Catalogue</h1></a>
+    
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Database</th>
+                <th>Schema</th>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Time Log</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if data %}
+                {% for record in data %}
+                    <tr>
+                        <td>{{ record.object_database }}</td>
+                        <td>{{ record.object_schema }}</td>
+                        <td>{{ record.object_type }}</td>
+                        <td>{{ record.object_name }}</td>
+                        <td>{{ record.object_size }}</td>
+                        <td>{{ record.time_log }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6">
+                        <h3>Record has been deleted</h3>
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</body>
+</html>
