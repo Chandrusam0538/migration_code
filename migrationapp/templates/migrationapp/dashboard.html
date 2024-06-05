@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,12 +8,11 @@
     <link rel="stylesheet" href="{% static 'migrationapp/css/dash.css' %}">
 </head>
 <body>
-    
     <div class="container">
         <h1>Database Connection</h1>
 
         <!-- Form for Database Connection -->
-        <form method="post" class="form-container">
+        <form action="" method="post" class="form-container">
             {% csrf_token %}
             <div class="form-group drop">
                 <label for="db_type">Database Type:</label>
@@ -24,19 +24,15 @@
             </div>
             <div class="form-group">
                 <label for="db_server">Server:</label>
-                <input type="text" id="db_server" name="db_server" required>
+                <input type="text" id="db_server" name="host" required> <!-- Changed name to host -->
             </div>
             <div class="form-group">
                 <label for="db_username">Username:</label>
-                <input type="text" id="db_username" name="db_username" required>
+                <input type="text" id="db_username" name="user" required> <!-- Changed name to user -->
             </div>
             <div class="form-group">
                 <label for="db_password">Password:</label>
-                <input type="password" id="db_password" name="db_password" required>
-            </div>
-            <!-- <div class="form-group">
-                <label for="db_name">Database Name:</label>
-                <input type="text" id="db_name" name="db_name" required> -->
+                <input type="password" id="db_password" name="password" required> <!-- Changed name to password -->
             </div>
             <button type="submit">Connect</button>
         </form>
@@ -45,6 +41,5 @@
             <p class="message">{{ scan_message }}</p>
         {% endif %}
     </div>
-
 </body>
 </html>
