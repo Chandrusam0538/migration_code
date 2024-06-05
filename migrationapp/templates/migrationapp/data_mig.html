@@ -11,7 +11,7 @@
         <h1>Data migration</h1>
 
         <!-- Form for Database Connection -->
-        <form method="post" class="form-container">
+        <form action="/scan_and_store_data/" method="post" class="form-container">
             {% csrf_token %}
             <div class="form-group drop">
                 <label for="db_name">Database Name:</label>
@@ -21,25 +21,13 @@
                     {% endfor %}
                 </select>
             </div>
-            <!-- <div class="form-group drop">
-                <label for="db_type">source database:</label>
-                <select id="db_type" name="db_type" required>
-                    <option value="mysql">MySQL</option>
-                    <option value="postgresql">PostgreSQL</option>
-                    <option value="sqlserver">SQL Server</option>
-                </select>
-            </div> -->
             <div class="form-group drop">
-                <label for="db_type">target database:</label>
-                <select id="db_type" name="db_type" required>
+                <label for="db_type">Target Database:</label>
+                <select id="db_type" name="target_db_type" required> <!-- Changed name to target_db_type -->
                     <option value="mysql">MySQL</option>
                     <option value="postgresql">PostgreSQL</option>
                     <option value="sqlserver">SQL Server</option>
                 </select>
-            </div>
-            <!-- <div class="form-group">
-                <label for="db_name">Database Name:</label>
-                <input type="text" id="db_name" name="db_name" required> -->
             </div>
             <button type="submit">Migrate Data</button>
         </form>
