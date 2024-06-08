@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Data migration</title>
+    <title>Data Migration</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'migrationapp/css/dash.css' %}">
 </head>
 <body>
     <div class="container">
-        <h1>Data migration</h1>
+        <h1>Data Migration</h1>
 
-        <!-- Form for Database Connection -->
-        <form action="/scan_and_store_data/" method="post" class="form-container">
+        <!-- Form for Data Migration -->
+        <form action="/data_mig/" method="post" class="form-container">
             {% csrf_token %}
             <div class="form-group drop">
                 <label for="db_name">Database Name:</label>
@@ -22,8 +22,8 @@
                 </select>
             </div>
             <div class="form-group drop">
-                <label for="db_type">Target Database:</label>
-                <select id="db_type" name="target_db_type" required> <!-- Changed name to target_db_type -->
+                <label for="target_db_type">Target Database:</label>
+                <select id="target_db_type" name="target_db_type" required>
                     <option value="mysql">MySQL</option>
                     <option value="postgresql">PostgreSQL</option>
                     <option value="sqlserver">SQL Server</option>
