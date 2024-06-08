@@ -14,7 +14,7 @@ urlpatterns = [
     path('Database_Connectivity/', views.dashboard, name='dashboard'),
 
     path('display_data/', views.data_catalogue, name='data_catalogue'),
-    path('scan_and_store_data/', views.scan_and_store_data, name='scan_and_store_data'),
+    # path('scan_and_store_data/', views.scan_and_store_data, name='scan_and_store_data'),
     path('data_mig/', views. data_mig, name='data_mig'),
     # Add other necessary paths
 ]
