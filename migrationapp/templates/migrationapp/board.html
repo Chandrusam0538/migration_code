@@ -1,43 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
-    
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'migrationapp/css/board.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> <!-- Add Font Awesome -->
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> Add Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgb(152, 151, 152);
+            position: relative; /* Ensure relative positioning for absolute elements */
+        }
 
+        .dropdown-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 999; /* Ensure it's above other content */
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .mainContainer {
+            width: 80%; /* Adjust as needed */
+            max-width: 600px; /* Adjust as needed */
+            padding: 20px;
+            border: 1px solid #8562d2;
+            border-radius: 10px;
+            text-align: center;
+            background-color: #f7f4f6;
+        }
+
+        .dashboard-heading {
+            margin-top: 20px; /* Adjust as needed */
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .card-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .card {
+            background-color: #40425c;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 30%;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .card h2 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .card p {
+            margin: 10px 0 0;
+        }
+
+        .card:hover {
+            background-color: #4cae4c;
+        }
+
+        .icons {
+            height: 30px;
+            width: 30px;
+        }
+        .user{
+   
+            color: rgb(18, 17, 17); /* Change icon color */
+            font-size: 3rem; 
+            text-align: absolute; 
+
+        }
+    </style>
 </head>
 <body>
-    <div>
-
-    <div class="user-icon">
-        <i class="fas fa-user-circle"></i>
-    </div>
-
-    <script>
-        console.log(sessionStorage.getItem("user_id"))
-    </script>
-
-    <div class="container">
-        
-        <h1>Dashboard</h1>
-        <div class="card-container">
-            <div class="card" onclick="window.location.href='http://127.0.0.1:8000/Database_Connectivity/'">
-                <h2>Database Connection</h2>
-                <p>Connect</p>
-            </div>
-            <div class="card" onclick="window.location.href=''">
-                <h2>Data Migration</h2>
-                <p>Migrate</p>
-            </div>
-            <div class="card" onclick="window.location.href='http://127.0.0.1:8000/display_data/'">
-                <h2>Data Catalogue</h2>
-                <p>Display</p>
+    <div class="dropdown-container">
+        <div class="dropdown">
+            <i class="bi bi-person user"></i>
+            <div class="dropdown-content">
+                <a href="#">Profile</a>
+                <a href="#">Settings</a>
+                <a href="#">Logout</a>
             </div>
         </div>
     </div>
-</div>
+
+    <div class="mainContainer">
+        <script>
+            console.log(sessionStorage.getItem("user_id"))
+        </script>
+
+        <div class="container">
+            <h1 class="dashboard-heading">Dashboard</h1>
+            <div class="card-container">
+                <div class="card" onclick="window.location.href='http://127.0.0.1:8000/Database_Connectivity/'">
+                    <h2>Database Connection</h2>
+                    <p>Connect</p>
+                </div>
+                <div class="card" onclick="window.location.href=''">
+                    <h2>Data Migration</h2>
+                    <p>Migrate</p>
+                </div>
+                <div class="card" onclick="window.location.href='http://127.0.0.1:8000/display_data/'">
+                    <h2>Data Catalogue</h2>
+                    <p>Display</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
