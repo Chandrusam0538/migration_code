@@ -38,3 +38,29 @@ urlpatterns = [
     path('data_mig/', views. data_mig, name='data_mig'),
     # Add other necessary paths
 ]
+
+
+
+#signup fuct
+# def new_user(request):
+#     if request.method == "POST":
+#         username = request.POST.get('username')
+#         email = request.POST.get('email')
+#         password = request.POST.get('password')
+#         re_enter_password = request.POST.get('Re_enter_password')
+
+#         # Check if passwords match
+#         if password != re_enter_password:
+#             return HttpResponse("Passwords do not match. Please try again.")
+
+#         try:
+#             # Create the user
+#             user = User.objects.create_users(username=username, email=email, password=password)
+#             # Optionally, you can set additional fields
+#             user.save()
+#             return redirect('login')  # Redirect to login page after successful signup
+#         except Exception as e:
+#             logger.error(f"Failed to create user: {e}")
+#             return HttpResponse(f"Failed to create user. Please try again. Error: {e}")
+
+#     return render(request, 'migrationapp/signup.html')
