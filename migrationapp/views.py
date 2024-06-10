@@ -392,6 +392,11 @@ def  get_database_name(request):
         return selected_value
     return render(request, 'data_mig.html')
 
+
+
+
+
+
 def data_mig(request):
 
     if request.method == "POST":
@@ -404,12 +409,27 @@ def data_mig(request):
         db_names = request.POST.get('db_names')
 
         conn_source = connect_to_source_database(db_type, host, user, password, database)
-        
+      
         if conn_source is not None:
             
             # success = scan_and_store_data(request, conn_source, target_db_type, db_type, database, password, user, host)
             success = scan_and_store_data(request, host,user, password, db_type, database)
+            
             if success:
+                if request.method == 'POST':
+
+                    database_operation = request.POST.get("database_operation")
+
+                    if database_operation == "fetch_data":
+                        database_type = request.POST.get('database_name')
+                        if database_type == 'Postgres':
+                            data = retrieve_data_postgres()
+                        elif database_type == 'MySql':
+                            data = retrieve_data_mysql()
+                        else:
+                            data = []
+                        return render(request, 'migrationapp/data_catalogue.html',{'data':data})
+
                 return render(request, 'migrationapp/data_catalogue.html')
             else:
                 return render(request, 'migrationapp/display_data.html', {'db_names': db_names})
@@ -417,6 +437,16 @@ def data_mig(request):
             return HttpResponse("Error: Connection to source database failed!")
 
     return render(request, 'migrationapp/data_catalogue.html')
+
+
+
+
+
+
+
+
+
+
 
 def get_db_connection(db_type, host, user, password):
     connection = None
