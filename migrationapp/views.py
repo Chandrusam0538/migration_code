@@ -26,6 +26,14 @@ def connect_to_postgresql():
         host="localhost",
         port="5432")
 
+def connect_to_mysql():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="1233",
+        database="datamig"
+    )
+
 def signup(request):
     if request.method == "POST":
         username = request.POST.get('username')
@@ -88,23 +96,6 @@ def data_catalogue(request):
 
     return render(request, 'migrationapp/data_catalogue.html', {'data': data})
 
-# def connect_to_postgresql():
-#     return psycopg2.connect(
-#         dbname="dmv_output",
-#         user="chandru_s",
-#         password="1233",
-#         host="localhost",
-#         port="5432"
-#     )
-
-def connect_to_mysql():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="1233",
-        database="datamig"
-    )
-
 def delete_records():
     conn = connect_to_postgresql()
     with conn.cursor() as cursor:
@@ -120,12 +111,12 @@ def retrieve_data_postgres():
     with conn.cursor() as cursor:
         cursor.execute("""
             SELECT object_database, object_schema, object_type, object_name, object_size, time_log
-            FROM public.metadata
+            FROM public.metadata ORDER BY time_log DESC;
+
         """)
         metadata_records = cursor.fetchall()
 
-    conn.close()  # Close connection after fetching data
-    # Convert records to a list of dictionaries
+    conn.close()
     records = [
         {
             'object_database': row[0],
@@ -142,20 +133,22 @@ def retrieve_data_postgres():
 def retrieve_data_mysql():
     conn = connect_to_mysql()  # Establish connection
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM metadata")
+    cursor.execute("""
+            SELECT object_database, object_schema, object_type, object_name, object_size, time_log
+            FROM metadata ORDER BY time_log DESC;
+
+        """)
     records = cursor.fetchall()
     conn.close()  # Close connection after fetching data
     return records
 
 def board(request):
 
-    print("========board========")
     return render(request, 'migrationapp/board.html')
 
 def login(request):
     scan_message = None
     if request.method == "POST":
-        print("hii....")
         username_or_email = request.POST.get('username')
         password = request.POST.get('password')
 
@@ -184,9 +177,6 @@ def login(request):
 
     return render(request, 'migrationapp/login.html', {'scan_message': scan_message})
 
-
-
-
 def get_user_by_username_or_email(username_or_email):
     conn_pg = connect_to_postgresql()
     cur = conn_pg.cursor()
@@ -205,8 +195,6 @@ def get_user_by_username_or_email(username_or_email):
 
     return user
 
-
-
 def dashboard(request):
     if 'user_id' not in request.session:
         return redirect('login')
@@ -223,17 +211,6 @@ def dashboard(request):
         request.session['user'] = user
         request.session['password'] = password
 
-
-        # print("==========dashboard=============")
-        # # print(target_db_type)
-        # print(db_type)
-        # # print(database)
-        # print(password)
-        # print(user)
-        # print(host)
-
-        # print("========dashboard=========")
-
         access_granted, connection, db_names = get_db_connection(db_type, host, user, password)
         if access_granted:
             print("access_granted")
@@ -244,31 +221,11 @@ def dashboard(request):
 
     return render(request, 'migrationapp/dashboard.html')
 
-
-
 def scan_and_store_data(request,  host, user, password, db_type, database):
-    print("=================scan================")
-    print(host, password, db_type, database)
     
-
-    print("Hello")
     if request.method == "POST":
         conn_source = request.POST.get("conn_source")
         target_db_type = request.POST.get("target_db_type")
-
-
-        print("==============scan===================")
-        print(target_db_type)
-        print(db_type)
-        print(database)
-        print(password)
-        print(user)
-        print(host)
-
-
-        print("===============================")
-
-
         # Define the target database connection
         if target_db_type == 'postgresql':
             conn_pg = connect_to_postgresql()
@@ -276,8 +233,6 @@ def scan_and_store_data(request,  host, user, password, db_type, database):
             conn_pg = connect_to_mysql()
         else:
             return HttpResponse("Invalid target database type")
-
-        
         try:
             cur = conn_pg.cursor()
             # Read existing records from the MetaData table
@@ -311,7 +266,6 @@ def scan_and_store_data(request,  host, user, password, db_type, database):
                         object_type = row.get('object_type')
                         object_name = row.get('object_name')
                         object_size = row.get('size', 'Unknown size')
-                        print(row)
                         if object_name is not None and (object_database, object_schema_name, object_type, object_name, object_size) not in existing_records:
                             insert_sql = """
                                             INSERT INTO metadata (object_database, object_schema, object_type, object_name, object_size) 
@@ -346,7 +300,7 @@ def scan_and_store_data(request,  host, user, password, db_type, database):
                         object_name = row['object_name'] if row.get('object_name') is not None else ''
                         object_type = row['object_type'] if row.get('object_type') is not None else ''
                         object_size = row['size'] if row.get('size') is not None else 'Unknown size'
-                        print(row)
+
                         if object_name is not None and \
                                 (object_database, object_schema_name, object_type, object_name, object_size) not in existing_records:
                             insert_sql = """
@@ -391,6 +345,7 @@ def scan_and_store_data(request,  host, user, password, db_type, database):
                             conn_pg.commit()
                             existing_records.append((object_database, object_schema_name, object_type, object_name, object_size))
 
+               
             else:
                 print("Unsupported database type:", db_type)
 
@@ -407,22 +362,21 @@ def scan_and_store_data(request,  host, user, password, db_type, database):
             cur.close()
             conn_pg.close()
 
-    return redirect("data_catalogue")
+    return redirect("migrationapp.data_catalogue.html")
 
-def user_logs(username, database_name, access_granted):
+def user_logs(username, host, access_granted):
     conn_pg = connect_to_postgresql()
     cur = conn_pg.cursor()
-    
+    database_name = host
     try:
         # Insert user log into PostgreSQL table
-        cur.execute("INSERT INTO user_log (user_name, database_name, access_granted) VALUES (%s, %s, %s);", (username, database_name, access_granted))
+        cur.execute("INSERT INTO user_log (user_name, server_name, access_granted) VALUES (%s, %s, %s);", (username, host, access_granted))
         
         # Commit changes and close connection
         conn_pg.commit()
         cur.close()
         conn_pg.close()
         
-        print("========user_logs========")
     except Exception as e:
         # Handle any errors in logging
         print(f"Error logging user access: {e}")
@@ -430,15 +384,10 @@ def user_logs(username, database_name, access_granted):
         cur.close()
         conn_pg.close()
 
-
-
-
 def  get_database_name(request):
     if request.method == 'POST':
         # form = MyForm(request.POST)
         # if form.is_valid():
-        
-        print("========get_database_name========")
         selected_value = request.POST.get('db_type')
         return selected_value
     return render(request, 'data_mig.html')
@@ -446,7 +395,6 @@ def  get_database_name(request):
 def data_mig(request):
 
     if request.method == "POST":
-        # Retrieve the data from the session
         target_db_type = request.POST.get('target_db_type')
         host = request.session.get('host')
         user = request.session.get('user')
@@ -455,43 +403,26 @@ def data_mig(request):
         database = request.POST.get('db_name')
         db_names = request.POST.get('db_names')
 
-
-        print("========data_mig========")
-        print(host)
-        print(password)
-        print(db_type)
-        print(database)
-
-        
-        print("========data_mig========")
-
         conn_source = connect_to_source_database(db_type, host, user, password, database)
-
-        print("=======get_database_name======database: ", database)
-
+        
         if conn_source is not None:
-            print("sssssssssssssssssss")
+            
             # success = scan_and_store_data(request, conn_source, target_db_type, db_type, database, password, user, host)
             success = scan_and_store_data(request, host,user, password, db_type, database)
             if success:
                 return render(request, 'migrationapp/data_catalogue.html')
             else:
-                return render(request, 'migrationapp/data_mig.html', {'db_names': db_names})
+                return render(request, 'migrationapp/display_data.html', {'db_names': db_names})
         else:
             return HttpResponse("Error: Connection to source database failed!")
 
     return render(request, 'migrationapp/data_catalogue.html')
 
 def get_db_connection(db_type, host, user, password):
-    # Initialize variables
     connection = None
     access_granted = False
     db_names = []
-    
-    print("========get_db_connection========")
-    print(host,user,password)
-    print("========get_db_connection========")
-
+    user_logs(user, host, access_granted)
 
     try:
         # Attempt database connection based on the selected type
@@ -504,8 +435,6 @@ def get_db_connection(db_type, host, user, password):
                 cursor.close()
                 access_granted = True
 
-                
-            print("========get_db_connection========")
         elif db_type == 'postgresql':
             print(host)
             connection = psycopg2.connect(host=host, user=user, password=password, port='5432')
@@ -516,8 +445,6 @@ def get_db_connection(db_type, host, user, password):
                 cursor.close()
                 access_granted = True
 
-            
-            print("========get_db_connection========")
         elif db_type == 'sqlserver':
             connection = pyodbc.connect(
                 'DRIVER={ODBC Driver 17 for SQL Server};'
@@ -532,16 +459,12 @@ def get_db_connection(db_type, host, user, password):
                 cursor.close()
                 access_granted = True
             
-            print("========get_db_connection========")  
     except Exception as e:
         print("Error:", e)
     return access_granted, connection, db_names
 
 def connect_to_source_database(db_type, host, user, password, database):
     # Connect to the source database based on the type
-
-
-    
     conn_source = None
     try:
         if db_type == 'postgresql':
@@ -556,7 +479,6 @@ def connect_to_source_database(db_type, host, user, password, database):
                 'PWD=' + password
             )
             
-        print("========connect_to_source_database========")
     except Exception as e:
         print("Error connecting to database:", str(e))
     
