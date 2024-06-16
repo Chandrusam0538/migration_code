@@ -3,99 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Catalogue</title>
+    <title>Data Catalog</title>
     <style>
+        /* General Reset and Typography */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background-color: #111663;
+            overflow: hidden;
+        }
+        .navbar a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+            font-size: 18px;
+        }
+        .navbar a:hover {
+            background-color: #5d4370;
+        }
+
+        /* Main Header */
+        .header {
+            background-color: #6382e4;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Dropdown Container */
+        .dropdown-container {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            z-index: 1000;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .dropdown-container select,
+        .dropdown-container button[type="submit"] {
+            padding: 8px 12px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        /* Table Styles */
         table {
-            border-collapse: collapse;
             width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 20px; /* Added margin bottom */
+            background-color: #fff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         }
         th, td {
             border: 1px solid #dddddd;
             text-align: left;
-            padding: 8px;
+            padding: 12px;
         }
         th {
-            background-color: #a7dcf7;
+            background-color: #3b50b8;
+            color: white;
         }
-        .dropdown-container {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            padding: 5px 15px;
-        }
-        .dropdown-container select,
-        .dropdown-container button[type="submit"] {
-            padding: 5px 15px; /* Adjust padding for height and width */
-            font-size: 16px; /* Adjust font size */
-        }
-        .head{
-            color: rgb(17, 17, 201);
-        }
-        .no_records{
-            border: 1px solid #dddddd;
+        .no-records {
             text-align: center;
-            padding: 8px;   
+            padding: 12px;
+            color: #555;
         }
     </style>
-   
 </head>
 <body>
-    <div class="dropdown-container">
-        <form method="post">
-            {% csrf_token %}
-            <select name="database_name">
-                <option value="">Select Database</option>
-                <option value="MySql">MySql</option>
-                <option value="Postgres">Postgres</option>
-            </select>
 
-            <select name="database_operation">
-                <option value="">Select Operation</option>
-                <option value="fetch_data">Fetch Data</option>
-                <option value="delete_records">Delete Records</option>
-            </select>
+<!-- Navbar -->
+<div class="navbar">
+    <a href="/board/">Home</a>
+    <a href="#">Settings</a>
+    <a href="/login/">Logout</a>
+</div>
 
-            <button type="submit"> Fetch Data</button>
-            
-        </form>
+<!-- Content -->
+<div class="header">
+    <h1>Data Catalog</h1>
+</div>
 
-        
-       
-    </div>
-    <a href="/board/" style="text-decoration: none;" ><h1 class="head">Data Catalogue</h1></a>
-    
-    <table id="dataTable">
-        <thead>
-            <tr>
-                <th>Database</th>
-                <th>Schema</th>
-                <th>Type</th>
-                <th>Name</th>
-                <th>Size</th>
-                <th>Time Log</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if data %}
-                {% for record in data %}
-                    <tr>
-                        <td>{{ record.object_database }}</td>
-                        <td>{{ record.object_schema }}</td>
-                        <td>{{ record.object_type }}</td>
-                        <td>{{ record.object_name }}</td>
-                        <td>{{ record.object_size }}</td>
-                        <td>{{ record.time_log }}</td>
-                    </tr>
-                {% endfor %}
-            {% else %}
+<div class="dropdown-container">
+    <form method="post">
+        {% csrf_token %}
+        <select name="database_name">
+            <option value="">Select Database</option>
+            <option value="MySql">MySql</option>
+            <option value="Postgres">Postgres</option>
+        </select>
+
+        <select name="database_operation">
+            <option value="">Select Operation</option>
+            <option value="fetch_data">Fetch Data</option>
+            <option value="delete_records">Delete Records</option>
+        </select>
+
+        <button type="submit">Execute</button>
+    </form>
+</div>
+
+<!-- Table -->
+<table>
+    <thead>
+        <tr>
+            <th>Database</th>
+            <th>Schema</th>
+            <th>Type</th>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Time Log</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if data %}
+            {% for record in data %}
                 <tr>
-                    <td colspan="6" class="no_records">
-                        <h3>Record has been deleted</h3>
-                    </td>
+                    <td>{{ record.object_database }}</td>
+                    <td>{{ record.object_schema }}</td>
+                    <td>{{ record.object_type }}</td>
+                    <td>{{ record.object_name }}</td>
+                    <td>{{ record.object_size }}</td>
+                    <td>{{ record.time_log }}</td>
                 </tr>
-            {% endif %}
-        </tbody>
-    </table>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="6" class="no-records">
+                    <h3>No records found</h3>
+                </td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+
 </body>
 </html>
