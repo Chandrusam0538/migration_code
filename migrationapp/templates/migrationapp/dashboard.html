@@ -2,19 +2,133 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Database Connection</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'migrationapp/css/dash.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+        }
+        .navbar {
+            background-color: #563d7c; /* Dark purple */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar-brand {
+            color: #ffffff;
+            font-size: 1.5rem;
+            padding: 10px 20px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        .navbar-brand i {
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+        }
+        .nav-link {
+            color: #ffffff;
+            padding: 10px 20px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .nav-link:hover {
+            background-color: #452a5d; /* Darker purple on hover */
+        }
+        .container-main {
+            padding: 20px;
+            padding-top: 80px; /* Adjust for navbar height */
+            margin-top: 60px; /* Compensate for fixed navbar */
+        }
+        .container-form {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #563d7c; /* Dark purple */
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            color: #333333; /* Dark gray */
+        }
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #cccccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button[type="submit"] {
+            background-color: #563d7c; /* Dark purple */
+            color: #ffffff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        button[type="submit"]:hover {
+            background-color: #452a5d; /* Darker purple on hover */
+        }
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0; /* Light gray */
+            border-left: 4px solid #563d7c; /* Dark purple border left */
+            color: #333333;
+        }
+        .icon {
+            font-size: 2rem;
+            margin-right: 10px;
+            color: #563d7c; /* Dark purple icon color */
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Database Connection</h1>
+
+<nav class="navbar">
+    <a href="#" class="navbar-brand"><i class="bi bi-database icon"></i> Database Connection</a>
+    <div class="navbar-nav">
+        <a href="#" class="nav-link"><i class="bi bi-person"></i> Profile</a>
+        <a href="#" class="nav-link"><i class="bi bi-gear"></i> Settings</a>
+        <a href="http://127.0.0.1:8000/login/" class="nav-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+</nav>
+
+<div class="container-main">
+    <div class="container-form">
+        <h1><i class="bi bi-database icon"></i> Database Connection</h1>
 
         <!-- Form for Database Connection -->
-        <form action="" method="post" class="form-container">
+        <form action="" method="post" class="form-container" id="databaseForm">
             {% csrf_token %}
-            <div class="form-group drop">
-                <label for="db_type">Database Type:</label>
+            <div class="form-group">
+                <label for="db_type"><i class="bi bi-gear icon"></i> Database Type:</label>
                 <select id="db_type" name="db_type" required>
                     <option value="mysql">MySQL</option>
                     <option value="postgresql">PostgreSQL</option>
@@ -22,23 +136,36 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="db_server">Server:</label>
-                <input type="text" id="db_server" name="host" required> <!-- Changed name to host -->
+                <label for="db_server"><i class="bi bi-server icon"></i> Server:</label>
+                <input type="text" id="db_server" name="host" placeholder="Enter server address" required>
             </div>
             <div class="form-group">
-                <label for="db_username">Username:</label>
-                <input type="text" id="db_username" name="user" required> <!-- Changed name to user -->
+                <label for="db_username"><i class="bi bi-person icon"></i> Username:</label>
+                <input type="text" id="db_username" name="user" placeholder="Enter username" required>
             </div>
             <div class="form-group">
-                <label for="db_password">Password:</label>
-                <input type="password" id="db_password" name="password" required> <!-- Changed name to password -->
+                <label for="db_password"><i class="bi bi-lock icon"></i> Password:</label>
+                <input type="password" id="db_password" name="password" placeholder="Enter password" required>
             </div>
-            <button type="submit">Connect</button>
+            <button type="submit"><i class="bi bi-box-arrow-in-right"></i> Connect</button>
         </form>
 
-        {% if scan_message %}
-            <p class="message">{{ scan_message }}</p>
-        {% endif %}
+        <div id="errorMessage" class="message"></div>
     </div>
+</div>
+
+<script>
+    document.getElementById('databaseForm').addEventListener('submit', function(event) {
+        var dbServer = document.getElementById('db_server').value.trim();
+        var dbUsername = document.getElementById('db_username').value.trim();
+        var dbPassword = document.getElementById('db_password').value.trim();
+
+        if (dbServer === '' || dbUsername === '' || dbPassword === '') {
+            event.preventDefault(); // Prevent form submission
+            document.getElementById('errorMessage').innerHTML = '<i class="bi bi-exclamation-circle icon"></i> Please fill out all fields.';
+        }
+    });
+</script>
+
 </body>
 </html>
