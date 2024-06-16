@@ -2,151 +2,174 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'migrationapp/css/board.css' %}">
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> Add Font Awesome -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: rgb(152, 151, 152);
-            position: relative; /* Ensure relative positioning for absolute elements */
+        body {
+            background-color: #f2f2f2; /* Light gray background */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333333; /* Dark gray text */
+            background-image: url('https://source.unsplash.com/random/1600x900/?data,bars'); /* Background image with data bars */
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
         }
 
-        .dropdown-container {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 999; /* Ensure it's above other content */
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+            border-radius: 10px;
+            box-shadow: 0px 0px 20px 0px rgba(0,0,0,0.1);
+        }
+
+        .navbar {
+            background-color: #563d7c; /* Dark purple navbar */
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .navbar-brand {
+            color: #ffffff;
+            font-size: 1.5rem;
+        }
+
+        .navbar-nav {
+            gap: 10px;
+        }
+
+        .nav-link {
+            color: #ffffff !important;
+            font-weight: 500;
+            font-size: 1rem;
         }
 
         .dropdown {
             position: relative;
-            display: inline-block;
         }
 
-        .dropdown-content {
+        .dropdown-toggle::after {
             display: none;
-            position: absolute;
-            background-color: #f9f9f9;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
         }
 
-        .dropdown-content a {
-            color: black;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
+        .dropdown-menu {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
         }
 
-        .dropdown-content a:hover {
-            background-color: #f1f1f1;
-        }
-
-        .dropdown:hover .dropdown-content {
-            display: block;
-        }
-
-        .mainContainer {
-            padding: 20px;
-            border: 1px solid #8562d2;
-            border-radius: 10px;
-            text-align: center;
-            background-color: #f7f4f6;
-        }
-
-        .dashboard-heading {
-            margin-top: 20px; /* Adjust as needed */
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-
-        .card-container {
-            display: flex;
-            justify-content: space-between;
+        .dropdown-item {
+            color: #563d7c !important;
         }
 
         .card {
-            background-color: #40425c;
-            color: white;
+            background-color: #ffffff; /* White cards */
+            color: #333333; /* Dark gray text */
             padding: 20px;
-            border-radius: 8px;
-            width: 30%;
+            border-radius: 10px;
             text-align: center;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.3s;
+            margin-bottom: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .card h2 {
-            margin: 0;
-            font-size: 1.5em;
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: #563d7c; /* Dark purple headings */
         }
 
         .card p {
-            margin: 10px 0 0;
+            margin-bottom: 0;
         }
 
         .card:hover {
-            background-color: #4cae4c;
+            background-color: #f0f0f0; /* Light gray hover */
+            transform: translateY(-5px);
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
         }
 
-        .icons {
-            height: 30px;
-            width: 30px;
+        .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #563d7c; /* Dark purple icon color */
         }
-        .user{
-   
-            color: rgb(18, 17, 17); /* Change icon color */
-            font-size: 3rem; 
-            text-align: absolute; 
 
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .card {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="dropdown-container">
-        <div class="dropdown">
-            <i class="bi bi-person user"></i>
-            <div class="dropdown-content">
-                <a href="#">Profile</a>
-                <a href="#">Settings</a>
-                <a href='http://127.0.0.1:8000/login/'>Logout</a>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person"></i> User
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="#">Profile</a></li>
+                            <li><a class="dropdown-item" href="#">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="http://127.0.0.1:8000/login/">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="mainContainer">
-        <script>
-            console.log(sessionStorage.getItem("user_id"))
-        </script>
-
-        <div class="container">
-            <h1 class="dashboard-heading">Dashboard</h1>
-            <div class="card-container">
+    <div class="container">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            <div class="col">
                 <div class="card" onclick="window.location.href='http://127.0.0.1:8000/Database_Connectivity/'">
+                    <i class="bi bi-database icon"></i>
                     <h2>Database Connection</h2>
-                    <p>Connect</p>
-                </div>
-                <div class="card" onclick="window.location.href=''">
-                    <h2>Data Migration</h2>
-                    <p>Migrate</p>
-                </div>
-                <div class="card" onclick="window.location.href='http://127.0.0.1:8000/display_data/'">
-                    <h2>Data Catalogue</h2>
-                    <p>Display</p>
+                    <p>Connect to database</p>
                 </div>
             </div>
+            <div class="col">
+                <div class="card" onclick="window.location.href=''">
+                    <i class="bi bi-arrow-repeat icon"></i>
+                    <h2>Data Migration</h2>
+                    <p>Migrate data</p>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card" onclick="window.location.href='http://127.0.0.1:8000/display_data/'">
+                    <i class="bi bi-table icon"></i>
+                    <h2>Data Catalogue</h2>
+                    <p>Display data</p>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card" onclick="window.location.href=''">
+                    <i class="bi bi-pie-chart icon"></i>
+                    <h2>Data Visualization</h2>
+                    <p>View pie charts</p>
+                </div>
+            </div>
+            <!-- Add more cards as needed -->
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 </body>
 </html>
