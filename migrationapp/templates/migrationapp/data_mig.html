@@ -119,6 +119,20 @@
         <h1>Data Migration</h1>
 
         <!-- Form for Data Migration -->
+         
+<!-- <head>
+    <meta charset="UTF-8">
+    <title>Data Migration</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'migrationapp/css/dash.css' %}">
+</head> -->
+<body>
+    <div class="container">
+        <!-- <h1>Data Migration</h1> -->
+        <h3>DB Type: {{db_type}}</h3>
+        <h3>Server Name: {{host}}</h3>
+        <h3>User: {{user}}</h3>
+
         <form action="/data_mig/" method="post" class="form-container">
             {% csrf_token %}
             <div class="form-group">
@@ -150,3 +164,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 </body>
 </html>
+
+
+
+
