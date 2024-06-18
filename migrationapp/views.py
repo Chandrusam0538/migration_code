@@ -3,20 +3,18 @@ from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password, check_password
 from datetime import datetime
 import psycopg2
-from psycopg2 import extras
 import urllib
 import logging
 import pyodbc
 import pandas as pd
 from sqlalchemy import create_engine
-import pymysql
 import psycopg2
 import mysql.connector
 
-# Set up logging
+
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
-
 
 def connect_to_postgresql():
     return psycopg2.connect(
@@ -34,6 +32,39 @@ def connect_to_mysql():
         database="datamig"
     )
 
+
+def login(request):
+    scan_message = None
+    if request.method == "POST":
+        username_or_email = request.POST.get('username')
+        password = request.POST.get('password')
+
+        print(username_or_email)
+
+        logger.debug(f"Received login attempt for username or email: {username_or_email}")
+
+        user = get_user_by_username_or_email(username_or_email)
+
+        if user:
+            # logger.debug(f"User found: {user}")
+            if check_password(password, user[3]):  # Assuming the password is stored at index 3
+                # logger.debug("Password check passed.")
+                request.session['user_id'] = user[0]  # Store user ID in session
+                print("valid user..")
+                return redirect("board")
+            else:
+                logger.debug("Password check failed.")
+                scan_message = "Invalid Credentials."
+                
+        else:
+            logger.debug("User not found.")
+            scan_message = "Invalid Credentials."
+            print("invalid......")
+        return redirect("login")
+
+    return render(request, 'migrationapp/login.html', {'scan_message': scan_message})
+
+
 def signup(request):
     if request.method == "POST":
         username = request.POST.get('username')
@@ -48,7 +79,7 @@ def signup(request):
 
         return redirect('login')
 
-    return render(request, 'migrationapp/signin.html')
+    return render(request, 'migrationapp/signup.html')
 
 def create_user(username, email, password):
     hashed_password = make_password(password)
@@ -117,65 +148,47 @@ def retrieve_data_postgres():
         metadata_records = cursor.fetchall()
 
     conn.close()
+
     records = [
         {
+            'sno': idx + 1,
             'object_database': row[0],
             'object_schema': row[1],
             'object_type': row[2],
             'object_name': row[3],
             'object_size': row[4],
-            'time_log': row[5]
+            'time_log': row[5],
         }
-        for row in metadata_records
+        for idx, row in enumerate(metadata_records)
     ]
     return records
 
 def retrieve_data_mysql():
-    conn = connect_to_mysql()  # Establish connection
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("""
+    conn = connect_to_postgresql()  # Establish connection
+    with conn.cursor() as cursor:
+        cursor.execute("""
             SELECT object_database, object_schema, object_type, object_name, object_size, time_log
             FROM metadata ORDER BY time_log DESC;
 
         """)
-    records = cursor.fetchall()
+        record = cursor.fetchall()
     conn.close()  # Close connection after fetching data
+    records = [
+    {
+        'sno': idx + 1,
+        'object_database': row[0],
+        'object_schema': row[1],
+        'object_type': row[2],
+        'object_name': row[3],
+        'object_size': row[4],
+        'time_log': row[5],
+    }
+    for idx, row in enumerate(record)
+]
     return records
 
 def board(request):
-
     return render(request, 'migrationapp/board.html')
-
-def login(request):
-    scan_message = None
-    if request.method == "POST":
-        username_or_email = request.POST.get('username')
-        password = request.POST.get('password')
-
-        print(username_or_email)
-
-        logger.debug(f"Received login attempt for username or email: {username_or_email}")
-
-        user = get_user_by_username_or_email(username_or_email)
-
-        if user:
-            logger.debug(f"User found: {user}")
-            if check_password(password, user[3]):  # Assuming the password is stored at index 3
-                logger.debug("Password check passed.")
-                request.session['user_id'] = user[0]  # Store user ID in session
-                print("valid user..")
-                return redirect("board")
-            else:
-                logger.debug("Password check failed.")
-                scan_message = "Invalid Credentials."
-                
-        else:
-            logger.debug("User not found.")
-            scan_message = "Invalid Credentials."
-            print("invalid......")
-        return redirect("login")
-
-    return render(request, 'migrationapp/login.html', {'scan_message': scan_message})
 
 def get_user_by_username_or_email(username_or_email):
     conn_pg = connect_to_postgresql()
@@ -217,7 +230,7 @@ def dashboard(request):
             context = {'db_names' : db_names, 'connection' : connection, 'db_type': db_type, 'host' : host, 'user' : user, 'password' : password}
             return render(request, 'migrationapp/data_mig.html', context)
         else:
-            return render(request, 'migrationapp/data_mig.html', {'error_message': "Invalid database credentials. Please try again."})
+            return render(request, 'migrationapp/dashboard.html', {'error_message': "Invalid database credentials. Please try again."})
 
     return render(request, 'migrationapp/dashboard.html')
 
@@ -392,11 +405,6 @@ def  get_database_name(request):
         return selected_value
     return render(request, 'data_mig.html')
 
-
-
-
-
-
 def data_mig(request):
 
     if request.method == "POST":
@@ -437,16 +445,6 @@ def data_mig(request):
             return HttpResponse("Error: Connection to source database failed!")
 
     return render(request, 'migrationapp/data_catalogue.html')
-
-
-
-
-
-
-
-
-
-
 
 def get_db_connection(db_type, host, user, password):
     connection = None
