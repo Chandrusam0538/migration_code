@@ -511,3 +511,23 @@ def connect_to_source_database(db_type, host, user, password, database):
         print("Error connecting to database:", str(e))
     
     return conn_source
+
+
+
+
+
+
+def database_display(request):
+     conn = connect_to_postgresql()
+     cur = conn.cursor()
+     cur.execute("select object_database from metadata group by object_database;")
+     tables = cur.fetchall()
+     conn.close()
+     return tables
+
+def present_db(request):
+    tables = database_display(request)  # Fetch data using database_display function
+    return render(request, 'migrationapp/database.html', {'tables': tables})
+    # return render(request, 'migrationapp/database.html')     
+
+
