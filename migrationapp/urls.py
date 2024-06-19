@@ -15,7 +15,7 @@ urlpatterns = [
 
     path('display_data/', views.data_catalogue, name='data_catalogue'),
     # path('scan_and_store_data/', views.scan_and_store_data, name='scan_and_store_data'),
-    path('data_mig/', views. data_mig, name='data_mig')
+    path('data_mig/', views. data_mig, name='data_mig'),
+    path('db/', views.present_db, name='present_db')
     # path('signup/', views.new_user, name='new_user'),
 ]    
-
