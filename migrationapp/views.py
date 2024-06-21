@@ -548,3 +548,23 @@ def present_db(request):
     tables = database_display(request)  # Fetch data using database_display function
     return render(request, 'migrationapp/database.html', {'tables': tables})
     # return render(request, 'migrationapp/database.html')     
+
+
+
+
+
+
+
+#connectivity cred
+def server_users(request):
+     conn = connect_to_postgresql()
+     cur = conn.cursor()
+     cur.execute("SELECT user_id, user_name, server_name from server_user_log;")
+     tables = cur.fetchall()
+     conn.close()
+     return tables
+
+def server_users_view(request):
+    tables = server_users(request)  # Fetch data using database_display function
+    return render(request, 'migrationapp/server_user.html', {'tables': tables})
+    # return render(request, 'migrationapp/database.html')     
