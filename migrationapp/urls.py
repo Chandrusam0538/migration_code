@@ -18,4 +18,6 @@ urlpatterns = [
     path('data_mig/', views. data_mig, name='data_mig'),
     path('db/', views.present_db, name='present_db')
     # path('signup/', views.new_user, name='new_user'),
+    
+    path('server_user_view/', views.server_users_view, name='server_users_view')
 ]    
