@@ -24,13 +24,13 @@ def connect_to_postgresql():
         host="localhost",
         port="5432")
 
-def connect_to_mysql():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="1233",
-        database="datamig"
-    )
+# def connect_to_mysql():
+#     return mysql.connector.connect(
+#         host="localhost",
+#         user="root",
+#         password="1233",
+#         database="datamig"
+#     )
 
 
 def login(request):
@@ -226,7 +226,6 @@ def dashboard(request):
 
         access_granted, connection, db_names = get_db_connection(db_type, host, user, password)
         if access_granted:
-            print("access_granted")
             context = {'db_names' : db_names, 'connection' : connection, 'db_type': db_type, 'host' : host, 'user' : user, 'password' : password}
             return render(request, 'migrationapp/data_mig.html', context)
         else:
@@ -238,14 +237,7 @@ def scan_and_store_data(request,  host, user, password, db_type, database):
     
     if request.method == "POST":
         conn_source = request.POST.get("conn_source")
-        target_db_type = request.POST.get("target_db_type")
-        # Define the target database connection
-        if target_db_type == 'postgresql':
-            conn_pg = connect_to_postgresql()
-        elif target_db_type == 'mysql':
-            conn_pg = connect_to_mysql()
-        else:
-            return HttpResponse("Invalid target database type")
+        conn_pg = connect_to_postgresql()
         try:
             cur = conn_pg.cursor()
             # Read existing records from the MetaData table
@@ -325,9 +317,15 @@ def scan_and_store_data(request,  host, user, password, db_type, database):
                             existing_records.append((object_database, object_schema_name, object_type, object_name, object_size))
                         
             elif db_type == 'postgresql':
-                conn_source = psycopg2.connect(dbname=database, user=user, password=password, host=host, port="5432")
-                conn_source.set_session(autocommit=True)
-                cur1 = conn_source.cursor(cursor_factory=psycopg2.extras.DictCursor)
+                print("1===========",database)
+                print("2===========",user)
+                print("3===========",password)
+                print("4===========",host)
+    
+                conn_source = psycopg2.connect(database=database, user=user, password=password, host=host, port="5432")
+                # conn_source.set_session(autocommit=True)
+                cur1 = conn_source.cursor
+                # (cursor_factory=psycopg2.extras.DictCursor)
 
                 sql_query = {
                     'Database': "SELECT current_database() AS object_database;",
@@ -377,14 +375,15 @@ def scan_and_store_data(request,  host, user, password, db_type, database):
 
     return redirect("migrationapp.data_catalogue.html")
 
-def user_logs(username, host, access_granted):
+def user_logs(username, host, password, access_granted):
     conn_pg = connect_to_postgresql()
     cur = conn_pg.cursor()
     database_name = host
     try:
+        
+        hashed_password = make_password(password)
         # Insert user log into PostgreSQL table
         cur.execute("INSERT INTO user_log (user_name, server_name, access_granted) VALUES (%s, %s, %s);", (username, host, access_granted))
-        
         # Commit changes and close connection
         conn_pg.commit()
         cur.close()
@@ -397,7 +396,24 @@ def user_logs(username, host, access_granted):
         cur.close()
         conn_pg.close()
 
-def  get_database_name(request):
+def create_server_user_log(username, host, password, access_granted):
+    conn_pg = connect_to_postgresql()
+    cur = conn_pg.cursor()
+
+    if access_granted:
+        conn_pg = connect_to_postgresql()
+        cur = conn_pg.cursor() 
+        hashed_password = make_password(password)
+        print("=============" ,hashed_password, password,"==============")
+        # Insert user log into PostgreSQL table
+        cur.execute("INSERT INTO server_user_log (user_name, server_name, server_password) VALUES (%s, %s, %s);", (username, host, hashed_password))
+        print("sucesssss")
+        # Commit changes and close connection
+        conn_pg.commit()
+
+
+
+def get_database_name(request):
     if request.method == 'POST':
         # form = MyForm(request.POST)
         # if form.is_valid():
@@ -450,7 +466,6 @@ def get_db_connection(db_type, host, user, password):
     connection = None
     access_granted = False
     db_names = []
-    user_logs(user, host, access_granted)
 
     try:
         # Attempt database connection based on the selected type
@@ -489,11 +504,15 @@ def get_db_connection(db_type, host, user, password):
             
     except Exception as e:
         print("Error:", e)
+    create_server_user_log(user, host,password, access_granted)
+    user_logs(user, host,password, access_granted)
     return access_granted, connection, db_names
+
 
 def connect_to_source_database(db_type, host, user, password, database):
     # Connect to the source database based on the type
     conn_source = None
+    print("connect_to_source_database")
     try:
         if db_type == 'postgresql':
             conn_source = psycopg2.connect(dbname=database, user=user, password=password, host=host, port='5432')
@@ -506,7 +525,8 @@ def connect_to_source_database(db_type, host, user, password, database):
                 'UID=' + user + ';'
                 'PWD=' + password
             )
-            
+        print("connect_to_source_database-2")
+
     except Exception as e:
         print("Error connecting to database:", str(e))
     
@@ -514,8 +534,7 @@ def connect_to_source_database(db_type, host, user, password, database):
 
 
 
-
-
+#data catlogue
 
 def database_display(request):
      conn = connect_to_postgresql()
@@ -529,5 +548,3 @@ def present_db(request):
     tables = database_display(request)  # Fetch data using database_display function
     return render(request, 'migrationapp/database.html', {'tables': tables})
     # return render(request, 'migrationapp/database.html')     
-
-
