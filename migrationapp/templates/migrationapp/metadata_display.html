@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metadata for {{ object_database }}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'migrationapp/css/dash.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+        }
+        .navbar {
+            background-color: #563d7c;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar-brand, .navbar-nav {
+            display: flex;
+            align-items: center;
+        }
+        .navbar-brand {
+            color: #ffffff;
+            font-size: 1.5rem;
+            padding: 10px 20px;
+            text-decoration: none;
+        }
+        .navbar-brand i {
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+        .nav-link {
+            color: #ffffff;
+            padding: 10px 20px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .nav-link:hover {
+            background-color: #452a5d;
+        }
+        .container-main {
+            padding: 20px;
+            padding-top: 80px;
+            margin-top: 60px;
+        }
+        .table-container {
+            max-width: 1500px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #563d7c;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px; /* Reduced font size */
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #dddddd;
+            border-right: 1px solid #dddddd; /* Add right border */
+        }
+        th {
+            background-color: #563d7c;
+            color: white;
+        }
+        tr:last-child td {
+            border-bottom: none; /* Remove bottom border for the last row */
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .btn {
+            background-color: #563d7c;
+            color: #ffffff;
+            padding: 4px 7px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: small;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #452a5d;
+        }
+        .icon {
+            font-size: 2rem;
+            margin-right: 10px;
+            color: #563d7c;
+        }
+        .no_records {
+            text-align: center;
+            color: #ff0000;
+        }
+        .back-button {
+            display: flex;
+            align-items: center;
+            color: #ffffff;
+            font-size: 1rem;
+            padding: 10px 20px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .back-button i {
+            margin-right: 8px;
+        }
+        .back-button:hover {
+            background-color: #452a5d;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="javascript:history.back()" class="back-button"><i class="bi bi-arrow-left"></i> Back</a>
+    <a href="#" class="navbar-brand"><i class="bi bi-database icon"></i> Database Catalogue</a>
+    <div class="navbar-nav">
+        <a href="#" class="nav-link"><i class="bi bi-person"></i> Profile</a>
+        <a href="#" class="nav-link"><i class="bi bi-gear"></i> Settings</a>
+        <a href="http://127.0.0.1:8000/login/" class="nav-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+</nav>
+
+<div class="container-main">
+    <div class="table-container">
+        <h1>Metadata for {{ object_database }}</h1>
+        <table id="dataTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Sno</th>
+                    <th>Database</th>
+                    <th>Schema</th>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Size</th>
+                    <th>Time Log</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if records %}
+                    {% for record in records %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ record.object_database }}</td>
+                            <td>{{ record.object_schema }}</td>
+                            <td>{{ record.object_type }}</td>
+                            <td>{{ record.object_name }}</td>
+                            <td>{{ record.object_size }}</td>
+                            <td>{{ record.time_log }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="no_records">
+                            <h3>No Records To Show</h3>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // JavaScript can be added here if needed
+</script>
+
+</body>
+</html>
