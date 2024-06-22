@@ -112,8 +112,8 @@ def data_catalogue(request):
             database_type = request.POST.get('database_name')
             if database_type == 'Postgres':
                 data = retrieve_data_postgres()
-            elif database_type == 'MySql':
-                data = retrieve_data_mysql()
+            # elif database_type == 'MySql':
+            #     data = retrieve_data_mysql()
             else:
                 data = []
 
@@ -163,29 +163,29 @@ def retrieve_data_postgres():
     ]
     return records
 
-def retrieve_data_mysql():
-    conn = connect_to_postgresql()  # Establish connection
-    with conn.cursor() as cursor:
-        cursor.execute("""
-            SELECT object_database, object_schema, object_type, object_name, object_size, time_log
-            FROM metadata ORDER BY time_log DESC;
+# def retrieve_data_mysql():
+#     conn = connect_to_postgresql()  # Establish connection
+#     with conn.cursor() as cursor:
+#         cursor.execute("""
+#             SELECT object_database, object_schema, object_type, object_name, object_size, time_log
+#             FROM metadata ORDER BY time_log DESC;
 
-        """)
-        record = cursor.fetchall()
-    conn.close()  # Close connection after fetching data
-    records = [
-    {
-        'sno': idx + 1,
-        'object_database': row[0],
-        'object_schema': row[1],
-        'object_type': row[2],
-        'object_name': row[3],
-        'object_size': row[4],
-        'time_log': row[5],
-    }
-    for idx, row in enumerate(record)
-]
-    return records
+#         """)
+#         record = cursor.fetchall()
+#     conn.close()  # Close connection after fetching data
+#     records = [
+#     {
+#         'sno': idx + 1,
+#         'object_database': row[0],
+#         'object_schema': row[1],
+#         'object_type': row[2],
+#         'object_name': row[3],
+#         'object_size': row[4],
+#         'time_log': row[5],
+#     }
+#     for idx, row in enumerate(record)
+# ]
+#     return records
 
 def board(request):
     return render(request, 'migrationapp/board.html')
@@ -243,8 +243,6 @@ def scan_and_store_data(request,  host, user, password, db_type, database):
             # Read existing records from the MetaData table
             cur.execute("SELECT object_database, object_schema, object_type, object_name, object_size FROM metadata")
             existing_records = cur.fetchall()
-
-            # existing_records = []  # Define a list to store existing records (if needed)
 
             # Iterate over SQL queries and process each result set
             if db_type == 'sqlserver':
@@ -396,30 +394,42 @@ def user_logs(username, host, password, access_granted):
         cur.close()
         conn_pg.close()
 
+
 def create_server_user_log(username, host, password, access_granted):
+    if not access_granted:
+        return  
     conn_pg = connect_to_postgresql()
     cur = conn_pg.cursor()
+    try:
+        # Read existing records from the server_user_log table
+        cur.execute("SELECT user_name, server_name FROM server_user_log WHERE user_name = %s AND server_name = %s", (username, host))
+        existing_record = cur.fetchone()
+        if existing_record is None:
+            # Record does not exist, proceed with insertion
+            hashed_password = make_password(password)
+            
+            # Insert user log into PostgreSQL table
+            cur.execute(
+                "INSERT INTO server_user_log (user_name, server_name, server_password) VALUES (%s, %s, %s);",
+                (username, host, hashed_password)
+            )
+            conn_pg.commit()
+            print("Success: User log for {} on {} successfully inserted.".format(username, host))
+        else:
+            print("Record for {} on {} already exists.".format(username, host))
+    except Exception as e:
+        conn_pg.rollback()
+        print("Failed to insert user log for {} on {}: {}".format(username, host, e))
+    finally:
+        cur.close()
 
-    if access_granted:
-        conn_pg = connect_to_postgresql()
-        cur = conn_pg.cursor() 
-        hashed_password = make_password(password)
-        print("=============" ,hashed_password, password,"==============")
-        # Insert user log into PostgreSQL table
-        cur.execute("INSERT INTO server_user_log (user_name, server_name, server_password) VALUES (%s, %s, %s);", (username, host, hashed_password))
-        print("sucesssss")
-        # Commit changes and close connection
-        conn_pg.commit()
-
-
-
-def get_database_name(request):
-    if request.method == 'POST':
-        # form = MyForm(request.POST)
-        # if form.is_valid():
-        selected_value = request.POST.get('db_type')
-        return selected_value
-    return render(request, 'data_mig.html')
+# def get_database_name(request):
+#     if request.method == 'POST':
+#         # form = MyForm(request.POST)
+#         # if form.is_valid():
+#         selected_value = request.POST.get('db_type')
+#         return selected_value
+#     return render(request, 'data_mig.html')
 
 def data_mig(request):
 
@@ -544,14 +554,31 @@ def database_display(request):
      conn.close()
      return tables
 
+def retrieve_metadata(request, object_database):
+    conn = connect_to_postgresql()
+    cur = conn.cursor()
+    cur.execute("SELECT object_database, object_schema, object_type, object_name, object_size, time_log FROM public.metadata WHERE object_database = %s;", [object_database])
+    metadata_records = cur.fetchall()
+    records = [
+        {
+            'sno': idx + 1,
+            'object_database': row[0],
+            'object_schema': row[1],
+            'object_type': row[2],
+            'object_name': row[3],
+            'object_size': row[4],
+            'time_log': row[5],
+        }
+        for idx, row in enumerate(metadata_records)
+    ]
+    conn.close()
+    return render(request, 'migrationapp/metadata_display.html', {'records': records, 'object_database': object_database})
+
+
 def present_db(request):
     tables = database_display(request)  # Fetch data using database_display function
     return render(request, 'migrationapp/database.html', {'tables': tables})
     # return render(request, 'migrationapp/database.html')     
-
-
-
-
 
 
 
